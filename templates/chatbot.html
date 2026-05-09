@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<button id="themeToggle" class="theme-btn">
+    🌙
+</button>
+<body>
+<div id="loader">
+
+    <div class="spinner"></div>
+
+    <h1>🚀 IntelliHire AI</h1>
+
+</div>
+<div class="main">
+
+<h1>🤖 IntelliHire AI Chatbot</h1>
+
+<div class="big-card">
+
+<form method="POST">
+
+<input type="text"
+name="message"
+placeholder="Ask something about resumes..."
+required>
+
+<button type="submit">
+Ask AI
+</button>
+
+</form>
+
+<br>
+
+{% if response %}
+<div class="section-box">
+<h3>AI Response</h3>
+<p>{{ response }}</p>
+</div>
+{% endif %}
+
+</div>
+
+</div>
+<footer class="footer">
+
+    <div class="footer-content">
+
+        <h3>
+            🚀 IntelliHire AI
+        </h3>
+
+        <p>
+            AI Powered Recruitment Analytics Platform
+        </p>
+
+        <div class="footer-links">
+
+            <a href="/dashboard">Dashboard</a>
+
+            <a href="/screening">Screening</a>
+
+            <a href="/analytics">Analytics</a>
+
+            <a href="/leaderboard">Leaderboard</a>
+
+        </div>
+
+        <p class="copyright">
+            © 2026 IntelliHire • ML Project
+        </p>
+
+    </div>
+
+</footer>
+<script>
+
+const toggleBtn = document.getElementById("themeToggle");
+
+toggleBtn.onclick = () => {
+
+    document.body.classList.toggle("light-mode");
+
+    if(document.body.classList.contains("light-mode")){
+
+        localStorage.setItem("theme","light");
+
+        toggleBtn.innerHTML = "☀️";
+
+    } else {
+
+        localStorage.setItem("theme","dark");
+
+        toggleBtn.innerHTML = "🌙";
+
+    }
+
+};
+
+if(localStorage.getItem("theme") === "light"){
+
+    document.body.classList.add("light-mode");
+
+    toggleBtn.innerHTML = "☀️";
+
+}
+
+</script>
+<script>
+
+window.addEventListener("load", () => {
+
+    document.getElementById("loader").style.display = "none";
+
+});
+
+</script>
+<div class="chat-popup">
+
+    <a href="/chatbot">
+
+        🤖 AI Help
+
+    </a>
+
+</div>
+</body>
+</html>

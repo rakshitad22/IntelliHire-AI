@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>IntelliHire</title>
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}">
+</head>
+<button id="themeToggle" class="theme-btn">
+    🌙
+</button>
+<body>
+<div id="loader">
+
+    <div class="spinner"></div>
+
+    <h1>🚀 IntelliHire AI</h1>
+
+</div>
+<div class="hero-section">
+
+    <nav class="navbar">
+
+        <h2 class="logo">
+            🚀 IntelliHire AI
+        </h2>
+
+        <div class="nav-buttons">
+
+            <a href="/login" class="login-btn">
+                Login
+            </a>
+
+            <a href="/register" class="register-btn">
+                Register
+            </a>
+
+        </div>
+
+    </nav>
+
+    <div class="hero-content">
+
+        <h1>
+            AI Powered Resume Screening System
+        </h1>
+
+        <p>
+            Smart ATS platform using Machine Learning,
+            NLP, Analytics and Recruiter Intelligence.
+        </p>
+
+        <div class="hero-actions">
+
+            <a href="/register" class="main-btn">
+                🚀 Get Started
+            </a>
+
+            <a href="/login" class="secondary-btn">
+                🔐 Login
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+<footer class="footer">
+
+    <div class="footer-content">
+
+        <h3>
+            🚀 IntelliHire AI
+        </h3>
+
+        <p>
+            AI Powered Recruitment Analytics Platform
+        </p>
+
+        <div class="footer-links">
+
+            <a href="/dashboard">Dashboard</a>
+
+            <a href="/screening">Screening</a>
+
+            <a href="/analytics">Analytics</a>
+
+            <a href="/leaderboard">Leaderboard</a>
+
+        </div>
+
+        <p class="copyright">
+            © 2026 IntelliHire • ML Project
+        </p>
+
+    </div>
+
+</footer>
+<script>
+
+const toggleBtn = document.getElementById("themeToggle");
+
+toggleBtn.onclick = () => {
+
+    document.body.classList.toggle("light-mode");
+
+    if(document.body.classList.contains("light-mode")){
+
+        localStorage.setItem("theme","light");
+
+        toggleBtn.innerHTML = "☀️";
+
+    } else {
+
+        localStorage.setItem("theme","dark");
+
+        toggleBtn.innerHTML = "🌙";
+
+    }
+
+};
+
+if(localStorage.getItem("theme") === "light"){
+
+    document.body.classList.add("light-mode");
+
+    toggleBtn.innerHTML = "☀️";
+
+}
+
+</script>
+<script>
+
+window.addEventListener("load", () => {
+
+    document.getElementById("loader").style.display = "none";
+
+});
+
+</script>
+<div class="chat-popup">
+
+    <a href="/chatbot">
+
+        🤖 AI Help
+
+    </a>
+
+</div>
+</body>
+</html>                 
+
+
+
+
+
+
+
+
+
+
+

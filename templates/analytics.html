@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>AI Analytics Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- CHART JS -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<!-- THEME TOGGLE -->
+
+<button id="themeToggle" class="theme-btn">
+    🌙
+</button>
+
+<!-- LOADER -->
+
+<div id="loader">
+
+    <div class="spinner"></div>
+
+    <h1>🚀 IntelliHire AI</h1>
+
+</div>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+    <div>
+
+        <h2 class="logo">
+            🚀 IntelliHire
+        </h2>
+
+        <a href="/dashboard">
+            📊 Dashboard
+        </a>
+
+        <a href="/screening">
+            📄 Screening
+        </a>
+
+        <a href="/analytics" class="active">
+            📈 Analytics
+        </a>
+
+        <a href="/intelligence">
+            🧠 Intelligence
+        </a>
+
+        <a href="/leaderboard">
+            🏆 Leaderboard
+        </a>
+
+    </div>
+
+    <a href="/logout" class="logout-btn">
+        🚪 Logout
+    </a>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+    <!-- TITLE -->
+
+    <h1 class="analytics-title">
+        🚀 IntelliHire AI Analytics
+    </h1>
+
+    <p class="analytics-subtitle">
+        Advanced Recruitment Intelligence Dashboard
+    </p>
+
+    <!-- BUTTON -->
+
+    <a href="/download_analytics"
+       class="action-btn">
+
+       📥 Download Analytics PDF
+
+    </a>
+
+    <!-- KPI CARDS -->
+
+    <div class="kpi-grid">
+
+        <div class="kpi-card">
+
+            <h3>Total Resumes</h3>
+
+            <h1 class="counter"
+                data-target="{{ total_resumes }}">
+                0
+            </h1>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <h3>Categories</h3>
+
+            <h1 class="counter"
+                data-target="{{ total_categories }}">
+                0
+            </h1>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <h3>Avg Resume Words</h3>
+
+            <h1 class="counter"
+                data-target="{{ avg_resume_length }}">
+                0
+            </h1>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <h3>Top Category</h3>
+
+            <h2>
+                {{ top_category }}
+            </h2>
+
+        </div>
+
+    </div>
+
+    <!-- CHART GRID -->
+
+    <div class="analytics-grid">
+
+        <!-- BAR -->
+
+        <div class="glass-card">
+
+            <h2>
+                📊 Resume Categories
+            </h2>
+
+            <canvas id="barChart"></canvas>
+
+        </div>
+
+        <!-- PIE -->
+
+        <div class="glass-card">
+
+            <h2>
+                🥧 Category Distribution
+            </h2>
+
+            <canvas id="pieChart"></canvas>
+
+        </div>
+
+    </div>
+
+    <!-- SECOND GRID -->
+
+    <div class="analytics-grid">
+
+        <!-- LINE -->
+
+        <div class="glass-card">
+
+            <h2>
+                📈 Recruitment Growth
+            </h2>
+
+            <canvas id="lineChart"></canvas>
+
+        </div>
+
+        <!-- ATS -->
+
+        <div class="glass-card">
+
+            <h2>
+                ⚡ ATS Performance
+            </h2>
+
+            <div class="meter-box">
+
+                <div class="meter-circle">
+
+                    <span>
+                        92%
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- WORD CLOUD -->
+
+    <div class="glass-card">
+
+        <h2>
+            ☁️ AI Skills WordCloud
+        </h2>
+
+        <img class="wordcloud-img"
+             src="{{ url_for('static',
+             filename='charts/wordcloud.png') }}">
+
+    </div>
+
+    <!-- INSIGHTS -->
+
+    <div class="glass-card">
+
+        <h2>
+            🤖 AI Recruitment Insights
+        </h2>
+
+        <ul class="insight-list">
+
+            <li>
+                Machine Learning resumes dominate dataset.
+            </li>
+
+            <li>
+                ATS optimized resumes perform better.
+            </li>
+
+            <li>
+                Cloud and DevOps skills are trending.
+            </li>
+
+            <li>
+                Recruiters prefer GitHub linked resumes.
+            </li>
+
+        </ul>
+
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+
+<footer class="footer">
+
+    <div class="footer-content">
+
+        <h3>
+            🚀 IntelliHire AI
+        </h3>
+
+        <p>
+            AI Powered Recruitment Analytics Platform
+        </p>
+
+        <div class="footer-links">
+
+            <a href="/dashboard">
+                Dashboard
+            </a>
+
+            <a href="/screening">
+                Screening
+            </a>
+
+            <a href="/analytics">
+                Analytics
+            </a>
+
+            <a href="/leaderboard">
+                Leaderboard
+            </a>
+
+        </div>
+
+        <p>
+            © 2026 IntelliHire • ML Project
+        </p>
+
+    </div>
+
+</footer>
+
+<!-- CHAT -->
+
+<div class="chat-popup">
+
+    <a href="/chatbot">
+
+        🤖 AI Help
+
+    </a>
+
+</div>
+
+<!-- COUNTER -->
+
+<script>
+
+const counters =
+document.querySelectorAll('.counter');
+
+counters.forEach(counter => {
+
+counter.innerText = '0';
+
+const updateCounter = () => {
+
+const target =
++counter.getAttribute('data-target');
+
+const c =
++counter.innerText;
+
+const increment = target / 100;
+
+if(c < target){
+
+counter.innerText =
+`${Math.ceil(c + increment)}`;
+
+setTimeout(updateCounter, 15);
+
+}else{
+
+counter.innerText = target;
+
+}
+
+};
+
+updateCounter();
+
+});
+
+</script>
+
+<!-- CHARTS -->
+
+<script>
+
+/* BAR CHART */
+
+new Chart(
+document.getElementById('barChart'),
+
+{
+
+type:'bar',
+
+data:{
+
+labels:[
+'ML',
+'Python',
+'Data Science',
+'Java',
+'Cloud'
+],
+
+datasets:[{
+
+label:'Candidates',
+
+data:[90,80,70,50,40]
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+maintainAspectRatio:false
+
+}
+
+});
+
+/* PIE */
+
+new Chart(
+document.getElementById('pieChart'),
+
+{
+
+type:'doughnut',
+
+data:{
+
+labels:[
+'ML',
+'Python',
+'Cloud',
+'SQL',
+'Flask'
+],
+
+datasets:[{
+
+data:[35,25,15,15,10]
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+maintainAspectRatio:false
+
+}
+
+});
+
+/* LINE */
+
+new Chart(
+document.getElementById('lineChart'),
+
+{
+
+type:'line',
+
+data:{
+
+labels:[
+'Jan',
+'Feb',
+'Mar',
+'Apr',
+'May'
+],
+
+datasets:[{
+
+label:'Recruitment Growth',
+
+data:[10,25,40,60,95],
+
+fill:true,
+
+tension:0.4
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+maintainAspectRatio:false
+
+}
+
+});
+
+</script>
+
+<!-- THEME -->
+
+<script>
+
+const toggleBtn =
+document.getElementById("themeToggle");
+
+toggleBtn.onclick = () => {
+
+document.body.classList.toggle("light-mode");
+
+if(document.body.classList.contains("light-mode")){
+
+localStorage.setItem("theme","light");
+
+toggleBtn.innerHTML = "☀️";
+
+}else{
+
+localStorage.setItem("theme","dark");
+
+toggleBtn.innerHTML = "🌙";
+
+}
+
+};
+
+if(localStorage.getItem("theme") === "light"){
+
+document.body.classList.add("light-mode");
+
+toggleBtn.innerHTML = "☀️";
+
+}
+
+</script>
+
+<!-- LOADER -->
+
+<script>
+
+window.addEventListener("load", () => {
+
+document.getElementById("loader").style.display = "none";
+
+});
+
+</script>
+
+</body>
+
+</html>

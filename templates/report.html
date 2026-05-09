@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ATS Report</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<button id="themeToggle" class="theme-btn">
+    🌙
+</button>
+<body>
+<div id="loader">
+
+    <div class="spinner"></div>
+
+    <h1>🚀 IntelliHire AI</h1>
+
+</div>
+<div class="main">
+
+<h1>📄 ATS Report</h1>
+
+<div class="big-card">
+
+<h2>{{ candidate }}</h2>
+
+<p><b>ATS Score:</b> {{ score }}%</p>
+
+<p><b>Status:</b> {{ status }}</p>
+
+<a href="/report/{{ candidate }}/{{ score }}" class="action-btn">
+Download PDF Report
+</a>
+
+</div>
+
+</div>
+<script>
+
+const toggleBtn = document.getElementById("themeToggle");
+
+toggleBtn.onclick = () => {
+
+    document.body.classList.toggle("light-mode");
+
+    if(document.body.classList.contains("light-mode")){
+
+        localStorage.setItem("theme","light");
+
+        toggleBtn.innerHTML = "☀️";
+
+    } else {
+
+        localStorage.setItem("theme","dark");
+
+        toggleBtn.innerHTML = "🌙";
+
+    }
+
+};
+
+if(localStorage.getItem("theme") === "light"){
+
+    document.body.classList.add("light-mode");
+
+    toggleBtn.innerHTML = "☀️";
+
+}
+
+</script>
+<script>
+
+window.addEventListener("load", () => {
+
+    document.getElementById("loader").style.display = "none";
+
+});
+
+</script>
+<div class="chat-popup">
+
+    <a href="/chatbot">
+
+        🤖 AI Help
+
+    </a>
+
+</div>
+</body>
+</html>

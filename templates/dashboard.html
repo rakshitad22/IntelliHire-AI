@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>IntelliHire Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+<button id="themeToggle" class="theme-btn">
+    🌙
+</button>
+<body>
+<div id="loader">
+
+    <div class="spinner"></div>
+
+    <h1>🚀 IntelliHire AI</h1>
+
+</div>
+<div class="sidebar">
+
+    <div>
+
+        <h2 class="logo">
+            🚀 IntelliHire
+        </h2>
+
+        <a href="/dashboard" class="active">
+            <i class="fa fa-chart-line"></i>
+            Dashboard
+        </a>
+
+        <a href="/screening">
+            <i class="fa fa-file"></i>
+            Screening
+        </a>
+
+        <a href="/analytics">
+            <i class="fa fa-chart-bar"></i>
+            Analytics
+        </a>
+
+        <a href="/intelligence">
+            <i class="fa fa-brain"></i>
+            Intelligence
+        </a>
+
+        <a href="/leaderboard">
+    🏆 Leaderboard
+</a>
+    </div>
+
+    <a href="/logout" class="logout-btn">
+        <i class="fa fa-sign-out-alt"></i>
+        Logout
+    </a>
+
+</div>
+
+<div class="main">
+
+    <div class="topbar">
+
+        <div>
+
+            <h1>
+                📊 Recruitment Dashboard
+            </h1>
+
+            <p>
+                Welcome to IntelliHire AI ATS Platform
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- CARDS -->
+
+    <div class="cards">
+
+        <div class="card">
+
+            <div class="icon blue">
+                <i class="fa fa-file"></i>
+            </div>
+
+            <h2>Total Resumes</h2>
+
+            <h1>{{ total }}</h1>
+
+        </div>
+
+        <div class="card">
+
+            <div class="icon green">
+                <i class="fa fa-layer-group"></i>
+            </div>
+
+            <h2>Categories</h2>
+
+            <h1>{{ categories }}</h1>
+
+        </div>
+
+        <div class="card">
+
+            <div class="icon orange">
+                <i class="fa fa-align-left"></i>
+            </div>
+
+            <h2>Average Words</h2>
+
+            <h1>{{ avg_words }}</h1>
+
+        </div>
+
+        <div class="card">
+
+            <div class="icon purple">
+                <i class="fa fa-user-check"></i>
+            </div>
+
+            <h2>Screenings</h2>
+
+            <h1>{{ screenings }}</h1>
+
+        </div>
+
+    </div>
+
+    <!-- AI SUMMARY -->
+
+    <div class="dashboard-grid">
+
+        <div class="big-card">
+
+            <h2>
+                🤖 AI Hiring Insights
+            </h2>
+
+            <ul class="insight-list">
+
+                <li>
+                    Python and Machine Learning profiles
+                    have highest ATS matching rates.
+                </li>
+
+                <li>
+                    Candidates with GitHub links are
+                    shortlisted more frequently.
+                </li>
+
+                <li>
+                    ATS-friendly resumes improve
+                    screening performance.
+                </li>
+
+                <li>
+                    Cloud and DevOps skills are highly
+                    demanded in recruiters.
+                </li>
+
+            </ul>
+
+        </div>
+
+        <div class="big-card">
+
+            <h2>
+                🚀 Recruiter Recommendations
+            </h2>
+
+            <div class="skills-box">
+
+                <span>Python</span>
+                <span>Machine Learning</span>
+                <span>SQL</span>
+                <span>Flask</span>
+                <span>NLP</span>
+                <span>AWS</span>
+                <span>Docker</span>
+                <span>Data Science</span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- QUICK ACTIONS -->
+
+    <div class="quick-actions">
+
+        <a href="/screening" class="action-btn">
+            🚀 Start Screening
+        </a>
+
+        <a href="/analytics" class="action-btn">
+            📈 View Analytics
+        </a>
+
+        <a href="/intelligence" class="action-btn">
+            🧠 AI Intelligence
+        </a>
+
+    </div>
+
+</div>
+<footer class="footer">
+
+    <div class="footer-content">
+
+        <h3>
+            🚀 IntelliHire AI
+        </h3>
+
+        <p>
+            AI Powered Recruitment Analytics Platform
+        </p>
+
+        <div class="footer-links">
+
+            <a href="/dashboard">Dashboard</a>
+
+            <a href="/screening">Screening</a>
+
+            <a href="/analytics">Analytics</a>
+
+            <a href="/leaderboard">Leaderboard</a>
+
+        </div>
+
+        <p class="copyright">
+            © 2026 IntelliHire • ML Project
+        </p>
+
+    </div>
+
+</footer>
+<script>
+
+const toggleBtn = document.getElementById("themeToggle");
+
+toggleBtn.onclick = () => {
+
+    document.body.classList.toggle("light-mode");
+
+    if(document.body.classList.contains("light-mode")){
+
+        localStorage.setItem("theme","light");
+
+        toggleBtn.innerHTML = "☀️";
+
+    } else {
+
+        localStorage.setItem("theme","dark");
+
+        toggleBtn.innerHTML = "🌙";
+
+    }
+
+};
+
+if(localStorage.getItem("theme") === "light"){
+
+    document.body.classList.add("light-mode");
+
+    toggleBtn.innerHTML = "☀️";
+
+}
+
+</script>
+<script>
+
+window.addEventListener("load", () => {
+
+    document.getElementById("loader").style.display = "none";
+
+});
+
+</script>
+<div class="chat-popup">
+
+    <a href="/chatbot">
+
+        🤖 AI Help
+
+    </a>
+
+</div>
+</body>
+</html>

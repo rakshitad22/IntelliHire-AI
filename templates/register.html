@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Register</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+<button id="themeToggle" class="theme-btn">
+    🌙
+</button>
+<body class="auth-body">
+
+<!-- BACKGROUND ANIMATION -->
+
+<div class="bg-animation">
+
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+
+</div>
+
+<!-- REGISTER CARD -->
+
+<div class="auth-container">
+
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            🚀
+        </div>
+
+        <h1>
+            Create Account
+        </h1>
+
+        <p class="auth-subtitle">
+            Join IntelliHire AI Recruitment Platform
+        </p>
+
+        <form method="POST">
+
+            <div class="input-box">
+
+                <i class="fa fa-user"></i>
+
+                <input type="text"
+                       name="username"
+                       placeholder="Username"
+                       required>
+
+            </div>
+
+            <div class="input-box">
+
+                <i class="fa fa-envelope"></i>
+
+                <input type="email"
+                       name="email"
+                       placeholder="Email Address"
+                       required>
+
+            </div>
+
+            <div class="input-box">
+
+                <i class="fa fa-lock"></i>
+
+                <input type="password"
+                       name="password"
+                       placeholder="Password"
+                       required>
+
+            </div>
+
+            <button type="submit"
+                    class="auth-btn">
+
+                <i class="fa fa-user-plus"></i>
+
+                Register
+
+            </button>
+
+        </form>
+
+        <p class="switch-text">
+
+            Already have account?
+
+            <a href="/login">
+                Login
+            </a>
+
+        </p>
+
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+
+<footer class="footer">
+
+    <div class="footer-content">
+
+        <h3>
+            🚀 IntelliHire AI
+        </h3>
+
+        <p>
+            AI Powered Recruitment Analytics Platform
+        </p>
+
+        <div class="footer-links">
+
+            <a href="/dashboard">Dashboard</a>
+
+            <a href="/screening">Screening</a>
+
+            <a href="/analytics">Analytics</a>
+
+            <a href="/leaderboard">Leaderboard</a>
+
+        </div>
+
+        <p class="copyright">
+            © 2026 IntelliHire • ML Project
+        </p>
+
+    </div>
+
+</footer>
+<script>
+
+const toggleBtn = document.getElementById("themeToggle");
+
+toggleBtn.onclick = () => {
+
+    document.body.classList.toggle("light-mode");
+
+    if(document.body.classList.contains("light-mode")){
+
+        localStorage.setItem("theme","light");
+
+        toggleBtn.innerHTML = "☀️";
+
+    } else {
+
+        localStorage.setItem("theme","dark");
+
+        toggleBtn.innerHTML = "🌙";
+
+    }
+
+};
+
+if(localStorage.getItem("theme") === "light"){
+
+    document.body.classList.add("light-mode");
+
+    toggleBtn.innerHTML = "☀️";
+
+}
+
+</script>
+</body>
+</html>

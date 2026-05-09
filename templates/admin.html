@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Panel</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+<button id="themeToggle" class="theme-btn">
+    🌙
+</button>
+<body>
+<div id="loader">
+
+    <div class="spinner"></div>
+
+    <h1>🚀 IntelliHire AI</h1>
+
+</div>
+<div class="sidebar">
+
+    <div>
+
+        <h2 class="logo">
+            🚀 IntelliHire
+        </h2>
+
+        <a href="/dashboard">
+            <i class="fa fa-chart-line"></i>
+            Dashboard
+        </a>
+
+        <a href="/screening">
+            <i class="fa fa-file"></i>
+            Screening
+        </a>
+
+        <a href="/analytics">
+            <i class="fa fa-chart-bar"></i>
+            Analytics
+        </a>
+
+        <a href="/leaderboard">
+            <i class="fa fa-trophy"></i>
+            Leaderboard
+        </a>
+
+        <a href="/admin" class="active">
+            <i class="fa fa-user-shield"></i>
+            Admin
+        </a>
+
+    </div>
+
+    <a href="/logout" class="logout-btn">
+        <i class="fa fa-sign-out-alt"></i>
+        Logout
+    </a>
+
+</div>
+
+<div class="main">
+
+    <div class="topbar">
+
+        <div>
+
+            <h1>
+                🛠 Admin Dashboard
+            </h1>
+
+            <p>
+                IntelliHire Recruitment Management System
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- TOP CARDS -->
+
+    <div class="cards">
+
+        <div class="card glow-card">
+
+            <h2>
+                👥 Total Users
+            </h2>
+
+            <h1>
+                {{ users|length }}
+            </h1>
+
+        </div>
+
+        <div class="card glow-card">
+
+            <h2>
+                📄 Total Screenings
+            </h2>
+
+            <h1>
+                {{ screenings|length }}
+            </h1>
+
+        </div>
+
+        <div class="card glow-card">
+
+            <h2>
+                🏆 Highest ATS
+            </h2>
+
+            <h1>
+                {{ screenings[0].ats_score if screenings else 0 }}%
+            </h1>
+
+        </div>
+
+    </div>
+
+    <!-- USERS -->
+
+    <div class="big-card">
+
+        <h2>
+            👥 Registered Users
+        </h2>
+
+        <table class="admin-table">
+
+            <tr>
+
+                <th>ID</th>
+
+                <th>Username</th>
+
+                <th>Email</th>
+
+            </tr>
+
+            {% for user in users %}
+
+            <tr>
+
+                <td>{{ user.id }}</td>
+
+                <td>{{ user.username }}</td>
+
+                <td>{{ user.email }}</td>
+
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+    </div>
+
+    <br>
+
+    <!-- SCREENINGS -->
+
+    <div class="big-card">
+
+        <h2>
+            📄 Screening Records
+        </h2>
+
+        <table class="admin-table">
+
+            <tr>
+
+                <th>Rank</th>
+
+                <th>Candidate</th>
+
+                <th>ATS Score</th>
+
+                <th>Status</th>
+                <th>Action</th>
+
+            </tr>
+
+            {% for s in screenings %}
+
+            <tr>
+
+                <td>{{ loop.index }}</td>
+
+                <td>{{ s.candidate_name }}</td>
+
+                <td>{{ s.ats_score }}%</td>
+
+                <td>{{ s.status }}</td>
+
+                <td>
+
+    <a href="/delete/{{ s.id }}"
+       class="delete-btn">
+
+       Delete
+
+    </a>
+
+</td>
+
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+    </div>
+
+</div>
+
+<footer class="footer">
+
+    <div class="footer-content">
+
+        <h3>
+            🚀 IntelliHire AI
+        </h3>
+
+        <p>
+            AI Powered Recruitment Analytics Platform
+        </p>
+
+        <div class="footer-links">
+
+            <a href="/dashboard">Dashboard</a>
+
+            <a href="/screening">Screening</a>
+
+            <a href="/analytics">Analytics</a>
+
+            <a href="/leaderboard">Leaderboard</a>
+
+        </div>
+
+        <p class="copyright">
+            © 2026 IntelliHire • ML Project
+        </p>
+
+    </div>
+
+</footer>
+<script>
+
+const toggleBtn = document.getElementById("themeToggle");
+
+toggleBtn.onclick = () => {
+
+    document.body.classList.toggle("light-mode");
+
+    if(document.body.classList.contains("light-mode")){
+
+        localStorage.setItem("theme","light");
+
+        toggleBtn.innerHTML = "☀️";
+
+    } else {
+
+        localStorage.setItem("theme","dark");
+
+        toggleBtn.innerHTML = "🌙";
+
+    }
+
+};
+
+if(localStorage.getItem("theme") === "light"){
+
+    document.body.classList.add("light-mode");
+
+    toggleBtn.innerHTML = "☀️";
+
+}
+
+</script>
+<script>
+
+window.addEventListener("load", () => {
+
+    document.getElementById("loader").style.display = "none";
+
+});
+
+</script>
+<div class="chat-popup">
+
+    <a href="/chatbot">
+
+        🤖 AI Help
+
+    </a>
+
+</div>
+</body>
+
+</html>

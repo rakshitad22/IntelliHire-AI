@@ -1,446 +1,862 @@
-import streamlit as st
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    send_file,
+    jsonify
+)
+
+from flask_login import (
+    LoginManager,
+    UserMixin,
+    login_user,
+    login_required,
+    logout_user,
+    current_user
+)
+
+from flask_sqlalchemy import SQLAlchemy
+from reportlab.platypus import Table
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
+
+from werkzeug.utils import secure_filename
+
 import pandas as pd
-import plotly.express as px
-import sqlite3
+import os
+
+import matplotlib
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from wordcloud import WordCloud
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# =========================================
-# PAGE CONFIG
-# =========================================
+from PyPDF2 import PdfReader
 
-st.set_page_config(
-    page_title="IntelliHire AI",
-    page_icon="🚀",
-    layout="wide"
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer
 )
 
+from reportlab.lib.styles import getSampleStyleSheet
+
 # =========================================
-# CUSTOM CSS
+# APP CONFIG
 # =========================================
 
-st.markdown("""
-<style>
+app = Flask(__name__)
 
-.main {
-    background-color: #0f172a;
-}
+app.secret_key = "intellihire_secret_key"
 
-h1, h2, h3 {
-    color: white;
-}
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 
-[data-testid="metric-container"] {
-    background-color: #1e293b;
-    border-radius: 12px;
-    padding: 15px;
-}
-
-.stDataFrame {
-    background-color: white;
-}
-
-</style>
-""", unsafe_allow_html=True)
+app.config['UPLOAD_FOLDER'] = 'uploads'
 
 # =========================================
 # DATABASE
 # =========================================
 
-conn = sqlite3.connect("intellihire.db", check_same_thread=False)
-c = conn.cursor()
-
-c.execute("""
-CREATE TABLE IF NOT EXISTS users(
-    email TEXT PRIMARY KEY,
-    password TEXT
-)
-""")
-
-conn.commit()
+db = SQLAlchemy(app)
 
 # =========================================
-# LOGIN SYSTEM
+# LOGIN MANAGER
 # =========================================
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+login_manager = LoginManager()
 
-if "email" not in st.session_state:
-    st.session_state.email = ""
+login_manager.init_app(app)
 
-# =========================================
-# SIDEBAR
-# =========================================
-
-st.sidebar.title("🚀 IntelliHire AI")
-
-menu = st.sidebar.selectbox(
-    "Navigation",
-    ["Login", "Dashboard"]
-)
+login_manager.login_view = "login"
 
 # =========================================
-# LOGIN PAGE
+# FOLDERS
 # =========================================
 
-if menu == "Login":
+UPLOAD_FOLDER = "uploads"
 
-    st.title("🔐 Login / Register")
+CHART_FOLDER = "static/charts"
 
-    email = st.text_input("Email")
+REPORT_FOLDER = "reports"
 
-    password = st.text_input(
-        "Password",
-        type="password"
+ALLOWED_EXTENSIONS = {'pdf'}
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(CHART_FOLDER, exist_ok=True)
+os.makedirs(REPORT_FOLDER, exist_ok=True)
+
+# =========================================
+# FILE VALIDATION
+# =========================================
+
+def allowed_file(filename):
+
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# =========================================
+# DATASET
+# =========================================
+
+df = pd.read_csv("Resume.csv")
+
+# =========================================
+# DATABASE MODELS
+# =========================================
+
+class User(UserMixin, db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    username = db.Column(
+        db.String(100),
+        unique=True,
+        nullable=False
     )
 
-    col1, col2 = st.columns(2)
+    email = db.Column(
+        db.String(100),
+        unique=True,
+        nullable=False
+    )
 
-    # REGISTER
+    password = db.Column(
+        db.String(200),
+        nullable=False
+    )
 
-    if col1.button("Register"):
+    profile_image = db.Column(
+        db.String(200),
+        default="default.png"
+    )
 
-        c.execute(
-            "SELECT * FROM users WHERE email=?",
-            (email,)
+
+class Screening(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    candidate_name = db.Column(
+        db.String(200)
+    )
+
+    ats_score = db.Column(
+        db.Float
+    )
+
+    status = db.Column(
+        db.String(100)
+    )
+
+# =========================================
+# USER LOADER
+# =========================================
+
+@login_manager.user_loader
+def load_user(user_id):
+
+    return User.query.get(int(user_id))
+
+# =========================================
+# PDF EXTRACTION
+# =========================================
+
+def extract_resume_text(filepath):
+
+    text = ""
+
+    try:
+
+        reader = PdfReader(filepath)
+
+        for page in reader.pages:
+
+            extracted = page.extract_text()
+
+            if extracted:
+                text += extracted
+
+    except Exception as e:
+
+        print(e)
+
+        text = ""
+
+    return text
+
+# =========================================
+# HOME
+# =========================================
+
+@app.route("/")
+def home():
+
+    return render_template("home.html")
+
+# =========================================
+# REGISTER
+# =========================================
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+
+    if request.method == "POST":
+
+        username = request.form["username"]
+
+        email = request.form["email"]
+
+        password = generate_password_hash(
+            request.form["password"]
         )
 
-        if c.fetchone():
+        existing_user = User.query.filter_by(
+            email=email
+        ).first()
 
-            st.error("User already exists")
+        if existing_user:
+
+            flash("Email already exists")
+
+            return redirect(url_for("register"))
+
+        new_user = User(
+            username=username,
+            email=email,
+            password=password
+        )
+
+        db.session.add(new_user)
+
+        db.session.commit()
+
+        flash("Registration Successful")
+
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
+# =========================================
+# LOGIN
+# =========================================
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        email = request.form["email"]
+
+        password = request.form["password"]
+
+        user = User.query.filter_by(
+            email=email
+        ).first()
+
+        if user and check_password_hash(
+            user.password,
+            password
+        ):
+
+            login_user(user)
+
+            return redirect(url_for("dashboard"))
 
         else:
 
-            c.execute(
-                "INSERT INTO users VALUES (?,?)",
-                (email, password)
-            )
+            flash("Invalid Email or Password")
 
-            conn.commit()
+    return render_template("login.html")
 
-            st.success("Registered Successfully")
+# =========================================
+# LOGOUT
+# =========================================
 
-    # LOGIN
+@app.route("/logout")
+@login_required
+def logout():
 
-    if col2.button("Login"):
+    logout_user()
 
-        c.execute(
-            "SELECT * FROM users WHERE email=? AND password=?",
-            (email, password)
-        )
-
-        data = c.fetchone()
-
-        if data:
-
-            st.session_state.logged_in = True
-            st.session_state.email = email
-
-            st.success("Login Successful")
-
-        else:
-
-            st.error("Invalid Credentials")
+    return redirect(url_for("home"))
 
 # =========================================
 # DASHBOARD
 # =========================================
 
-elif menu == "Dashboard":
+@app.route("/dashboard")
+@login_required
+def dashboard():
 
-    if not st.session_state.logged_in:
+    total = len(df)
 
-        st.warning("Login First")
+    categories = df['Category'].nunique()
 
-    else:
+    avg_words = int(
+        df['Resume_str']
+        .apply(lambda x: len(str(x).split()))
+        .mean()
+    )
 
-        st.title("🚀 IntelliHire AI Dashboard")
+    screenings = Screening.query.count()
 
-        st.markdown("""
-### AI-Powered Recruitment Intelligence Platform
-""")
+    leaderboard = Screening.query.order_by(
+        Screening.ats_score.desc()
+    ).limit(5).all()
 
-        st.success(
-            f"Logged in as {st.session_state.email}"
-        )
+    return render_template(
+        "dashboard.html",
+        total=total,
+        categories=categories,
+        avg_words=avg_words,
+        screenings=screenings,
+        leaderboard=leaderboard
+    )
 
-        # =====================================
-        # JOB DESCRIPTION
-        # =====================================
+# =========================================
+# SCREENING
+# =========================================
 
-        job_desc = st.text_area(
-            "Paste Job Description"
-        )
+@app.route("/screening", methods=["GET", "POST"])
+@login_required
+def screening():
 
-        uploaded_files = st.file_uploader(
-            "Upload Resumes",
-            accept_multiple_files=True,
-            type=["txt"]
-        )
+    results = []
 
-        analyze = st.button("Analyze Candidates")
+    if request.method == "POST":
 
-        # =====================================
-        # SKILLS
-        # =====================================
+        job_desc = request.form["jobdesc"]
 
-        skills_list = [
-            "python",
-            "java",
-            "machine learning",
-            "sql",
-            "html",
-            "css",
-            "javascript",
-            "pandas",
-            "numpy",
-            "nlp"
-        ]
+        files = request.files.getlist("resume")
 
-        # =====================================
-        # ANALYSIS
-        # =====================================
+        for file in files:
 
-        if analyze:
+            if not allowed_file(file.filename):
 
-            resumes = []
-            names = []
+                flash("Only PDF resumes allowed")
 
-            for file in uploaded_files:
+                continue
 
-                text = file.read().decode("utf-8")
+            filename = secure_filename(
+                file.filename
+            )
 
-                resumes.append(text)
+            filepath = os.path.join(
+                UPLOAD_FOLDER,
+                filename
+            )
 
-                names.append(file.name)
+            file.save(filepath)
 
-            corpus = resumes + [job_desc]
+            text = extract_resume_text(filepath)
 
             tfidf = TfidfVectorizer(
                 stop_words='english'
             )
 
-            vectors = tfidf.fit_transform(corpus)
+            combined_text = text.lower() * 2
 
-            jd_vector = vectors[-1]
+            vectors = tfidf.fit_transform([
+                combined_text,
+                job_desc.lower()
+            ])
 
-            resume_vectors = vectors[:-1]
+            similarity = cosine_similarity(
+                vectors[0],
+                vectors[1]
+            )[0][0]
 
-            scores = cosine_similarity(
-                resume_vectors,
-                jd_vector
-            )
+            score = round((similarity * 100) + 45, 2)
 
-            results = []
+            if score > 100:
+                score = 100
 
-            selected = 0
-            rejected = 0
+            if score >= 60:
 
-            # =================================
-            # PROCESS EACH RESUME
-            # =================================
+                status = "Selected ✅"
 
-            for i, score in enumerate(scores):
+            elif score >= 35:
 
-                percent = round(score[0] * 100, 2)
+                status = "Moderate Match ⚠️"
 
-                decision = (
-                    "Selected"
-                    if percent > 30
-                    else "Rejected"
+            else:
+
+                status = "Rejected ❌"
+
+            skills = [
+                "python",
+                "machine learning",
+                "sql",
+                "flask",
+                "nlp",
+                "docker",
+                "aws",
+                "java",
+                "html",
+                "css",
+                "javascript"
+            ]
+
+            resume_skills = []
+
+            for skill in skills:
+
+                if skill.lower() in text.lower():
+
+                    resume_skills.append(skill)
+
+            missing_skills = []
+
+            for skill in skills:
+
+                if skill.lower() not in text.lower():
+
+                    missing_skills.append(skill)
+
+            suggestions = []
+
+            if score < 40:
+
+                suggestions.append(
+                    "Resume ATS compatibility is low"
                 )
 
-                if decision == "Selected":
-                    selected += 1
-                else:
-                    rejected += 1
+            elif score < 70:
 
-                matched = []
+                suggestions.append(
+                    "Resume partially matches role"
+                )
 
-                missing = []
+            else:
 
-                for skill in skills_list:
+                suggestions.append(
+                    "Resume strongly matches role"
+                )
 
-                    if (
-                        skill in resumes[i].lower()
-                        and
-                        skill in job_desc.lower()
-                    ):
-
-                        matched.append(skill)
-
-                    elif skill in job_desc.lower():
-
-                        missing.append(skill)
-
-                explanation = f"""
-Strong skill alignment detected.
-
-Matched Skills:
-{', '.join(matched)}
-
-Missing Skills:
-{', '.join(missing)}
-"""
-
-                questions = [
-                    f"Explain your experience in {s}"
-                    for s in matched[:3]
-                ]
-
-                results.append({
-
-                    "Candidate": names[i],
-
-                    "Match %": percent,
-
-                    "Decision": decision,
-
-                    "Matched Skills":
-                    ", ".join(matched),
-
-                    "Explanation":
-                    explanation,
-
-                    "Interview Questions":
-                    " | ".join(questions)
-                })
-
-            # =================================
-            # DATAFRAME
-            # =================================
-
-            df = pd.DataFrame(results)
-
-            df = df.sort_values(
-                by="Match %",
-                ascending=False
+            suggestions.append(
+                "Use ATS friendly formatting"
             )
 
-            # =================================
-            # KPI CARDS
-            # =================================
+            questions = []
 
-            avg_score = round(
-                df["Match %"].mean(),
-                2
+            if "python" in resume_skills:
+
+                questions.append(
+                    "Explain Python decorators."
+                )
+
+            if "sql" in resume_skills:
+
+                questions.append(
+                    "Explain SQL joins."
+                )
+
+            if not questions:
+
+                questions.append(
+                    "Tell me about yourself."
+                )
+
+            summary = (
+                f"Candidate has ATS score "
+                f"of {score}%"
             )
 
-            c1, c2, c3, c4 = st.columns(4)
-
-            c1.metric(
-                "Total Resumes",
-                len(df)
+            screening_data = Screening(
+                candidate_name=filename,
+                ats_score=score,
+                status=status
             )
 
-            c2.metric(
-                "Selected",
-                selected
+            db.session.add(screening_data)
+
+            db.session.commit()
+
+            results.append({
+
+                "name": filename,
+                "score": score,
+                "status": status,
+                "skills": resume_skills,
+                "missing": missing_skills[:5],
+                "suggestions": suggestions,
+                "questions": questions,
+                "summary": summary
+            })
+
+        results = sorted(
+            results,
+            key=lambda x: x["score"],
+            reverse=True
+        )
+
+    return render_template(
+        "screening.html",
+        results=results
+    )
+
+# =========================================
+# ANALYTICS
+# =========================================
+
+@app.route("/analytics")
+@login_required
+def analytics():
+
+    top_categories = df['Category'].value_counts().head(10)
+
+    plt.figure(figsize=(10,5))
+
+    sns.barplot(
+        x=top_categories.index,
+        y=top_categories.values
+    )
+
+    plt.xticks(rotation=45)
+
+    plt.tight_layout()
+
+    plt.savefig("static/charts/univariate.png")
+
+    plt.close()
+
+    df['Resume_Length'] = df['Resume_str'].apply(
+        lambda x: len(str(x).split())
+    )
+
+    plt.figure(figsize=(10,5))
+
+    sns.histplot(
+        df['Resume_Length'],
+        bins=30
+    )
+
+    plt.tight_layout()
+
+    plt.savefig("static/charts/resume_length.png")
+
+    plt.close()
+
+    text = " ".join(df['Resume_str'].astype(str))
+
+    wordcloud = WordCloud(
+        width=1000,
+        height=500,
+        background_color='white'
+    ).generate(text)
+
+    plt.figure(figsize=(12,6))
+
+    plt.imshow(wordcloud)
+
+    plt.axis("off")
+
+    plt.tight_layout()
+
+    plt.savefig("static/charts/wordcloud.png")
+
+    plt.close()
+
+    total_resumes = len(df)
+
+    total_categories = df['Category'].nunique()
+
+    avg_resume_length = int(
+        df['Resume_Length'].mean()
+    )
+
+    top_category = df['Category'].value_counts().idxmax()
+
+    missing_values = df.isnull().sum().sum()
+
+    return render_template(
+        "analytics.html",
+        total_resumes=total_resumes,
+        total_categories=total_categories,
+        avg_resume_length=avg_resume_length,
+        top_category=top_category,
+        missing_values=missing_values
+    )
+
+# =========================================
+# INTELLIGENCE
+# =========================================
+
+@app.route("/intelligence")
+@login_required
+def intelligence():
+
+    insights = [
+        "Python developers are highly demanded",
+        "Cloud skills improve ATS scores",
+        "Recruiters prefer ATS friendly resumes"
+    ]
+
+    recommendations = [
+        "Add certifications",
+        "Improve keyword optimization",
+        "Add projects"
+    ]
+
+    technologies = [
+        "TF-IDF",
+        "Cosine Similarity",
+        "Flask",
+        "SQLite"
+    ]
+
+    return render_template(
+        "intelligence.html",
+        insights=insights,
+        recommendations=recommendations,
+        technologies=technologies
+    )
+
+# =========================================
+# LEADERBOARD
+# =========================================
+
+@app.route("/leaderboard")
+@login_required
+def leaderboard():
+
+    screenings = Screening.query.order_by(
+        Screening.ats_score.desc()
+    ).all()
+
+    return render_template(
+        "leaderboard.html",
+        screenings=screenings
+    )
+
+# =========================================
+# PROFILE
+# =========================================
+
+@app.route("/profile")
+@login_required
+def profile():
+
+    return render_template(
+        "recruiter_profile.html"
+    )
+
+# =========================================
+# ADMIN PANEL
+# =========================================
+
+@app.route("/admin")
+@login_required
+def admin():
+
+    users = User.query.all()
+
+    screenings = Screening.query.order_by(
+        Screening.ats_score.desc()
+    ).all()
+
+    return render_template(
+        "admin.html",
+        users=users,
+        screenings=screenings
+    )
+
+# =========================================
+# PDF REPORT
+# =========================================
+
+@app.route("/report/<name>/<score>")
+def generate_report(name, score):
+
+    filepath = f"reports/{name}.pdf"
+
+    doc = SimpleDocTemplate(filepath)
+
+    styles = getSampleStyleSheet()
+
+    elements = []
+
+    elements.append(
+        Paragraph(
+            "IntelliHire ATS Report",
+            styles['Title']
+        )
+    )
+
+    elements.append(Spacer(1,20))
+
+    elements.append(
+        Paragraph(
+            f"Candidate: {name}",
+            styles['BodyText']
+        )
+    )
+
+    elements.append(
+        Paragraph(
+            f"ATS Score: {score}%",
+            styles['BodyText']
+        )
+    )
+
+    doc.build(elements)
+
+    return send_file(
+        filepath,
+        as_attachment=True
+    )
+
+# =========================================
+# CHATBOT
+# =========================================
+
+@app.route("/chatbot", methods=["GET", "POST"])
+@login_required
+def chatbot():
+
+    response = ""
+
+    if request.method == "POST":
+
+        user_message = request.form["message"]
+
+        if "skills" in user_message.lower():
+
+            response = (
+                "Top skills are Python, ML and SQL."
             )
 
-            c3.metric(
-                "Rejected",
-                rejected
+        elif "resume" in user_message.lower():
+
+            response = (
+                "Use ATS friendly keywords."
             )
 
-            c4.metric(
-                "Average Match %",
-                avg_score
+        else:
+
+            response = (
+                "IntelliHire AI Assistant ready."
             )
 
-            st.divider()
+    return render_template(
+        "chatbot.html",
+        response=response
+    )
 
-            # =================================
-            # TABLE
-            # =================================
+# =========================================
+# API
+# =========================================
 
-            st.subheader(
-                "🏆 Candidate Leaderboard"
-            )
+@app.route("/api/leaderboard")
+def leaderboard_api():
 
-            st.dataframe(
-                df,
-                use_container_width=True
-            )
+    data = Screening.query.order_by(
+        Screening.ats_score.desc()
+    ).all()
 
-            # =================================
-            # BAR CHART
-            # =================================
+    leaderboard = []
 
-            st.subheader(
-                "📊 Match Score Analytics"
-            )
+    for d in data:
 
-            fig = px.bar(
-                df,
-                x="Candidate",
-                y="Match %",
-                color="Decision",
-                text="Match %"
-            )
+        leaderboard.append({
 
-            st.plotly_chart(
-                fig,
-                use_container_width=True
-            )
+            "candidate": d.candidate_name,
+            "score": d.ats_score,
+            "status": d.status
+        })
 
-            # =================================
-            # PIE CHART
-            # =================================
+    return jsonify(leaderboard)
 
-            st.subheader(
-                "📈 Hiring Distribution"
-            )
+# =========================================
+# DATABASE CREATE
+# =========================================
 
-            pie = px.pie(
-                names=["Selected", "Rejected"],
-                values=[selected, rejected]
-            )
+with app.app_context():
 
-            st.plotly_chart(
-                pie,
-                use_container_width=True
-            )
+    db.create_all()
 
-            # =================================
-            # AI INSIGHTS
-            # =================================
+# =========================================
+# RUN APP
+# =========================================
+@app.route("/delete/<int:id>")
+@login_required
+def delete_candidate(id):
 
-            st.subheader(
-                "🧠 AI Hiring Insights"
-            )
+    candidate = Screening.query.get(id)
 
-            top = df.iloc[0]
+    db.session.delete(candidate)
 
-            st.success(
-                f"Top Candidate: {top['Candidate']}"
-            )
+    db.session.commit()
 
-            st.markdown(f"""
-### Why Selected?
+    flash("Candidate Deleted")
 
-✔ High similarity score
+    return redirect(url_for("admin"))
+@app.route("/download_analytics")
+@login_required
+def download_analytics():
 
-✔ Strong technical skill match
+    filepath = "reports/analytics.pdf"
 
-✔ Relevant keywords detected
+    doc = SimpleDocTemplate(filepath)
 
-✔ Match Score: {top['Match %']}%
-""")
+    elements = []
 
-            # =================================
-            # DOWNLOAD REPORT
-            # =================================
+    data = [
 
-            csv = df.to_csv(
-                index=False
-            ).encode('utf-8')
+        ["Metric", "Value"],
 
-            st.download_button(
-                label="📥 Download Report",
-                data=csv,
-                file_name='hiring_report.csv',
-                mime='text/csv'
-            )
+        ["Total Resumes", len(df)],
+
+        ["Categories", df['Category'].nunique()]
+
+    ]
+
+    table = Table(data)
+
+    elements.append(table)
+
+    doc.build(elements)
+
+    return send_file(
+        filepath,
+        as_attachment=True
+    )
+# =========================================
+# PROFILE IMAGE UPLOAD
+# =========================================
+
+@app.route("/upload_profile", methods=["POST"])
+@login_required
+def upload_profile():
+
+    file = request.files["profile"]
+
+    if file:
+
+        filename = secure_filename(file.filename)
+
+        filepath = os.path.join(
+            "static/profile",
+            filename
+        )
+
+        file.save(filepath)
+
+        current_user.profile_image = filename
+
+        db.session.commit()
+
+    return redirect(url_for("profile"))
+
+if __name__ == "__main__":
+
+    app.run(debug=True)

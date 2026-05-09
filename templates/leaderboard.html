@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Leaderboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+
+<body>
+
+<!-- THEME BUTTON -->
+
+<button id="themeToggle" class="theme-btn">
+    🌙
+</button>
+
+<!-- LOADER -->
+
+<div id="loader">
+
+    <div class="spinner"></div>
+
+    <h1>🚀 IntelliHire AI</h1>
+
+</div>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+    <div>
+
+        <h2 class="logo">
+            🚀 IntelliHire
+        </h2>
+
+        <a href="/dashboard">
+            <i class="fa fa-chart-line"></i>
+            Dashboard
+        </a>
+
+        <a href="/screening">
+            <i class="fa fa-file"></i>
+            Screening
+        </a>
+
+        <a href="/analytics">
+            <i class="fa fa-chart-bar"></i>
+            Analytics
+        </a>
+
+        <a href="/intelligence">
+            <i class="fa fa-brain"></i>
+            Intelligence
+        </a>
+
+        <a href="/leaderboard" class="active">
+            <i class="fa fa-trophy"></i>
+            Leaderboard
+        </a>
+
+    </div>
+
+    <a href="/logout" class="logout-btn">
+
+        <i class="fa fa-sign-out-alt"></i>
+
+        Logout
+
+    </a>
+
+</div>
+
+<!-- MAIN CONTENT -->
+
+<div class="main">
+
+    <!-- TOPBAR -->
+
+    <div class="topbar">
+
+        <div>
+
+            <h1>
+                🏆 ATS Leaderboard
+            </h1>
+
+            <p>
+                Top ranked candidates based on ATS score
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- TOP STATS -->
+
+    <div class="cards">
+
+        <div class="card glow-card">
+
+            <h2>
+                👑 Highest Score
+            </h2>
+
+            <h1>
+                {{ screenings[0].ats_score if screenings else 0 }}%
+            </h1>
+
+        </div>
+
+        <div class="card glow-card">
+
+            <h2>
+                📄 Total Candidates
+            </h2>
+
+            <h1>
+                {{ screenings|length }}
+            </h1>
+
+        </div>
+
+        <div class="card glow-card">
+
+            <h2>
+                ✅ Selected
+            </h2>
+
+            <h1>
+
+                {{
+                screenings
+                |selectattr("status","equalto","Selected ✅")
+                |list
+                |length
+                }}
+
+            </h1>
+
+        </div>
+
+    </div>
+
+    <!-- LEADERBOARD TABLE -->
+
+    <div class="leaderboard-table">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Rank</th>
+
+                    <th>Candidate</th>
+
+                    <th>ATS Score</th>
+
+                    <th>Status</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for s in screenings %}
+
+                <tr>
+
+                    <td>
+
+                        {% if loop.index == 1 %}
+                            🥇
+                        {% elif loop.index == 2 %}
+                            🥈
+                        {% elif loop.index == 3 %}
+                            🥉
+                        {% else %}
+                            {{ loop.index }}
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {{ s.candidate_name }}
+
+                    </td>
+
+                    <td>
+
+                        <div class="progress-box">
+
+                            <div class="progress-bar"
+                                 style="width: {{ s.ats_score }}%;">
+
+                            </div>
+
+                            <span>
+
+                                {{ s.ats_score }}%
+
+                            </span>
+
+                        </div>
+
+                    </td>
+
+                    <td>
+
+                        {% if "Selected" in s.status %}
+
+                            <span class="status selected">
+
+                                {{ s.status }}
+
+                            </span>
+
+                        {% elif "Moderate" in s.status %}
+
+                            <span class="status moderate">
+
+                                {{ s.status }}
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="status rejected">
+
+                                {{ s.status }}
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+
+<footer class="footer">
+
+    <div class="footer-content">
+
+        <h3>
+            🚀 IntelliHire AI
+        </h3>
+
+        <p>
+            AI Powered Recruitment Analytics Platform
+        </p>
+
+        <div class="footer-links">
+
+            <a href="/dashboard">Dashboard</a>
+
+            <a href="/screening">Screening</a>
+
+            <a href="/analytics">Analytics</a>
+
+            <a href="/leaderboard">Leaderboard</a>
+
+        </div>
+
+        <p class="copyright">
+
+            © 2026 IntelliHire • ML Project
+
+        </p>
+
+    </div>
+
+</footer>
+
+<!-- CHATBOT -->
+
+<div class="chat-popup">
+
+    <a href="/chatbot">
+
+        🤖 AI Help
+
+    </a>
+
+</div>
+
+<!-- THEME SCRIPT -->
+
+<script>
+
+const toggleBtn =
+document.getElementById("themeToggle");
+
+toggleBtn.onclick = () => {
+
+document.body.classList.toggle("light-mode");
+
+if(document.body.classList.contains("light-mode")){
+
+localStorage.setItem("theme","light");
+
+toggleBtn.innerHTML = "☀️";
+
+} else {
+
+localStorage.setItem("theme","dark");
+
+toggleBtn.innerHTML = "🌙";
+
+}
+
+};
+
+if(localStorage.getItem("theme") === "light"){
+
+document.body.classList.add("light-mode");
+
+toggleBtn.innerHTML = "☀️";
+
+}
+
+</script>
+
+<!-- LOADER SCRIPT -->
+
+<script>
+
+window.addEventListener("load", () => {
+
+document.getElementById("loader").style.display = "none";
+
+});
+
+</script>
+
+</body>
+
+</html>
